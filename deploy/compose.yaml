@@ -1,0 +1,59 @@
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Oslo
+      # Install collections at startup (replaces manual `cscli collections install ...`)
+      - COLLECTIONS=crowdsecurity/caddy crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules
+    volumes:
+      - crowdsec_data:/var/lib/crowdsec/data
+      - crowdsec_config:/etc/crowdsec
+      - ./crowdsec/acquis.d:/etc/crowdsec/acquis.d:ro
+      # Read Caddy logs from shared volume
+      - caddy_logs:/var/log/caddy:ro
+    networks:
+      - proxy
+
+  caddy:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile.caddy
+      args:
+        CADDY_VERSION: "2.10.2"
+    image: my-caddy:custom
+    container_name: caddy
+    restart: unless-stopped
+    depends_on:
+      - crowdsec
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - ./.env
+    environment:
+      - TZ=Europe/Oslo
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      # Write logs to a shared volume (CrowdSec reads them)
+      - caddy_logs:/var/log/caddy
+    networks:
+      - proxy
+    stop_grace_period: 5s
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
+
+networks:
+  proxy:
+
+volumes:
+  caddy_data:
+  caddy_config:
+  caddy_logs:
+  crowdsec_data:
+  crowdsec_config
