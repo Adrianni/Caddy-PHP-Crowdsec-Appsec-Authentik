@@ -128,7 +128,7 @@ services:
       # Write logs to a shared volume (CrowdSec reads them)
       - /opt/caddy/logs:/var/log/caddy
       # Access to PHP-fpm files
-      - /opt/php-fpm/data:/srv
+      - /opt/caddy/www-data:/var/www:ro   # Caddy trenger typisk bare les
     networks:
       - proxy
     stop_grace_period: 5s
@@ -143,7 +143,7 @@ services:
     container_name: php-fpm
     restart: unless-stopped
     volumes:
-      - /opt/php-fpm/data:/var/www/html
+      - /opt/caddy/www-data:/var/www:rw   # PHP kan trenge skrive (uploads/cache)
       - /opt/php-fpm/config:/usr/local/etc/php
     networks:
       - proxy
