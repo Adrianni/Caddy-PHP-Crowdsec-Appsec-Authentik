@@ -20,10 +20,12 @@ Create the bind-mount directories on the host (Caddy runs as UID/GID 1000 in the
 
 ```bash
 sudo mkdir -p /opt/caddy/{data,config,logs} /opt/crowdsec/{data,config} \
-  /opt/Authentik/{postgres,redis,media,custom-templates}
+  /opt/Authentik/{postgres,redis,media,custom-templates} \
+  /opt/php-fm/{data,config}
 sudo chown -R 1000:1000 /opt/caddy/{data,config,logs}
 sudo chown -R 0:0 /opt/crowdsec/{data,config}
 sudo chown -R 1000:1000 /opt/Authentik/{postgres,redis,media,custom-templates}
+sudo chown -R 1000:1000 /opt/php-fm/{data,config}
 ```
 
 Go to the deploy folder and create `.env`:
@@ -70,3 +72,15 @@ docker compose exec crowdsec cscli metrics
 ## Notes
 - CrowdSec reads Caddy logs from `/opt/caddy/logs` via a shared bind mount.
 - AppSec must listen on 0.0.0.0:7422 in the container so Caddy can reach it.
+- Authentik images are pinned to a specific version in `deploy/compose.yaml` for reproducible upgrades.
+
+## Updating packages and images
+When something needs updating, pull new images and rebuild the custom Caddy image:
+
+```bash
+cd deploy
+docker compose pull
+docker compose up -d --build
+```
+
+If you want newer Authentik, update the image tag in `deploy/compose.yaml` and re-run the steps above.

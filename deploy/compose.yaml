@@ -131,5 +131,15 @@ services:
       - proxy
     stop_grace_period: 5s
 
+  php-fpm:
+    image: php:latest-fpm
+    container_name: php-fpm
+    restart: unless-stopped
+    volumes:
+      - /opt/php-fm/data:/var/www/html
+      - /opt/php-fm/config:/usr/local/etc/php
+    networks:
+      - proxy
+
 networks:
   proxy:
