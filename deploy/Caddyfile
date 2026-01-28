@@ -35,10 +35,22 @@
   route {
     crowdsec
     appsec
+
+    # (Valgfritt) Helt enkel helsesjekk uten å involvere PHP
+    handle /health {
+      respond "OK" 200
+    }
+
+    # Hvis du vil beskytte alt bak Authentik:
     import authentik
 
-    respond "Valid configuration. Crowdsec (✅ OK)<br> Appsec (✅ OK) <br> Authentik (✅ OK)" 200 {
-      close
-    }
+    # Webroot (må matche mounten du la til på caddy)
+    root * /srv
+
+    # Send .php til php-fpm (standard port er 9000)
+    php_fastcgi php-fpm:9000
+
+    # Server statiske filer (css/js/bilder) + index.php/index.html
+    file_server
   }
 }
