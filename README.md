@@ -83,6 +83,7 @@ docker compose exec crowdsec cscli metrics
 - CrowdSec reads Caddy logs from `/opt/caddy/logs` via a shared bind mount.
 - AppSec must listen on 0.0.0.0:7422 in the container so Caddy can reach it.
 - Authentik images are pinned to a specific version in `deploy/compose.yaml` for reproducible upgrades.
+- Authentik uses a Docker socket proxy (instead of mounting `/var/run/docker.sock` directly) for outpost management. The proxy is limited to container/image and info access via `deploy/compose.yaml`.
 
 ## Updating packages and images
 When something needs updating, pull new images and rebuild the custom Caddy image:
