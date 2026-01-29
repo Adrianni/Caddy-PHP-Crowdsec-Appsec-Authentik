@@ -5,4 +5,6 @@ CROWDSEC_API_TOKEN=put-your-crowdsec-bouncer-key-here
 AUTHENTIK_SECRET_KEY=change-me-to-a-long-random-string
 AUTHENTIK_POSTGRES_PASSWORD=change-me
 AUTHENTIK_HOST=http://authentik-server:9000
+# CrowdSec web UI password (matches cscli machines add crowdsec-web-ui --password ...)
+AUTHENTIK_GUI_PASSWORD=change-me
 # AUTHENTIK_HOST_BROWSER=https://auth.domain.tls # Uncomment when first time set up  of Authentik is done
