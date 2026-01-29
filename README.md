@@ -11,7 +11,7 @@ It also runs CrowdSec in its own container (LAPI + AppSec), with collections ins
 ## Layout
 - build/Dockerfile.caddy        -> builds the custom Caddy image
 - build/Dockerfile.php          -> builds the custom PHP-FPM image
-- deploy/compose.yaml           -> runs the full stack
+- deploy/compose.yaml           -> runs the full stack (inkl. CrowdSec web UI)
 - deploy/Caddyfile              -> localhost Caddy config with CrowdSec/AppSec + Authentik
 - deploy/crowdsec/acquis.d/*    -> acquis for Caddy + AppSec
 - deploy/dotenv_example         -> copy to deploy/.env
@@ -23,10 +23,12 @@ Create the bind-mount directories on the host (Caddy runs as UID/GID 1000 in the
 sudo mkdir -p /opt/caddy/{www-data,data,config,logs} /opt/crowdsec/{data,config} \
   /opt/crowdsec/data/acquis.d \
   /opt/Authentik/{postgres,redis,media,data,custom-templates} \
+  /opt/crowdsec-web-gui \
   /opt/php-fpm/config
 sudo chown -R 1000:1000 /opt/caddy/{www-data,data,config,logs}
 sudo chown -R 0:0 /opt/crowdsec/{data,config}
 sudo chown -R 1000:1000 /opt/Authentik/{postgres,redis,media,data,custom-templates}
+sudo chown -R 1000:1000 /opt/crowdsec-web-gui
 sudo chown -R 1000:1000 /opt/php-fpm/config
 sudo find /opt/caddy/www-data -type d -exec chmod 755 {} \;
 sudo find /opt/caddy/www-data -type f -exec chmod 644 {} \;
@@ -46,13 +48,14 @@ cp dotenv_example .env
 nano .env
 ```
 
-Set `CROWDSEC_API_TOKEN`, `AUTHENTIK_POSTGRES_PASSWORD`, and `AUTHENTIK_SECRET_KEY` in `deploy/.env`.
+Set `CROWDSEC_API_TOKEN`, `AUTHENTIK_POSTGRES_PASSWORD`, `AUTHENTIK_SECRET_KEY`, and `AUTHENTIK_GUI_PASSWORD` in `deploy/.env`.
 
 Generate strong values for the Authentik variables:
 
 ```bash
 echo "AUTHENTIK_POSTGRES_PASSWORD=$(openssl rand -base64 36 | tr -d '\n')"
 echo "AUTHENTIK_SECRET_KEY=$(openssl rand -base64 60 | tr -d '\n')"
+echo "AUTHENTIK_GUI_PASSWORD=$(openssl rand -hex 32)"
 ```
 
 ## 2) Start the stack (builds the Caddy + PHP-FPM images on first run)
@@ -75,16 +78,27 @@ Restart Caddy:
 docker compose restart caddy
 ```
 
-## 4) Check status
+## 4) Add a CrowdSec machine user for the web UI (one-time)
+Generate a password and create the machine user:
+
+```bash
+openssl rand -hex 32
+docker compose exec crowdsec cscli machines add crowdsec-web-ui --password <generated_password> -f /dev/null
+```
+
+Copy the generated password to `AUTHENTIK_GUI_PASSWORD` in `deploy/.env`.
+
+## 5) Check status
 ```bash
 docker compose logs -f caddy
 docker compose exec crowdsec cscli collections list
 docker compose exec crowdsec cscli metrics
 ```
 
-## 5) Access
+## 6) Access
 - `http://localhost` shows the validation page.
 - `http://localhost/authentik` proxies to Authentik.
+- `http://localhost:3000` shows the CrowdSec web UI.
 
 ## Notes
 - CrowdSec reads Caddy logs from `/opt/caddy/logs` via a shared bind mount.
