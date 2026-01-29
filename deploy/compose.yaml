@@ -71,9 +71,9 @@ services:
     volumes:
       - /opt/Authentik/media:/media
       - /opt/Authentik/custom-templates:/templates
-    ports:
-      - "9000:9000"
-      - "9443:9443"
+        #    ports:
+      #      - "9000:9000"
+      #      - "9443:9443"
     networks:
       - proxy
 
@@ -112,6 +112,7 @@ services:
       - IMAGES=1
       - INFO=1
       - POST=1
+      - NETWORKS=1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
@@ -162,6 +163,26 @@ services:
       - /opt/php-fpm/config:/usr/local/etc/php
     networks:
       - proxy
+
+  dockmon-agent:
+    image: ghcr.io/darthnorse/dockmon-agent:latest
+    container_name: dockmon-agent
+    restart: unless-stopped
+    depends_on:
+      - docker-socket-proxy
+    environment:
+      - DOCKMON_URL=https://192.168.50.130:8001
+      - REGISTRATION_TOKEN=${DOCKMON_register_TOKEN}
+      - TZ=Europe/Oslo
+      - INSECURE_SKIP_VERIFY=true
+      - DOCKER_HOST=tcp://docker-socket-proxy:2375
+    volumes:
+      - dockmon-agent-data:/data
+    networks:
+      - proxy
+
+volumes:
+  dockmon-agent-data:
 
 networks:
   proxy:
