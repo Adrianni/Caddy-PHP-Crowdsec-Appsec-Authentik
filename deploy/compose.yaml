@@ -34,21 +34,6 @@ services:
     networks:
       - proxy
 
-  authentik-redis:
-    image: redis:7-alpine
-    container_name: authentik-redis
-    restart: unless-stopped
-    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - /opt/Authentik/redis:/data
-    networks:
-      - proxy
-
   authentik-server:
     image: ghcr.io/goauthentik/server:2025.12.1
     container_name: authentik-server
@@ -63,7 +48,6 @@ services:
     env_file:
       - ./.env
     environment:
-      - AUTHENTIK_REDIS__HOST=authentik-redis
       - AUTHENTIK_POSTGRESQL__HOST=authentik-postgres
       - AUTHENTIK_POSTGRESQL__USER=authentik
       - AUTHENTIK_POSTGRESQL__NAME=authentik
@@ -91,7 +75,6 @@ services:
     env_file:
       - ./.env
     environment:
-      - AUTHENTIK_REDIS__HOST=authentik-redis
       - AUTHENTIK_POSTGRESQL__HOST=authentik-postgres
       - AUTHENTIK_POSTGRESQL__USER=authentik
       - AUTHENTIK_POSTGRESQL__NAME=authentik
